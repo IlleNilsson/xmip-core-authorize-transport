@@ -1,12 +1,6 @@
 # xmip-core-authorize-transport
 
-Authorize by transport: decides by rules on the transport identity: mechanism, class, address; a transport-layer policy. A technology of
-[xmip-core-authorize](https://github.com/IlleNilsson/xmip-core-authorize).
-
-Declared and not yet written; `architecture.toml` carries the maturity. When
-it is written it implements `Authorizer`, one mechanism at one gate (ADR-0050).
-What it may depend on is `repository-model.md` section 4 and ADR-0044: its
-capability, and no sibling.
+Transport authorization: ordered allow and deny rules on the transport identity — its mechanism, its class, the network the peer address falls in, and the Contract it would carry. A technology of [xmip-core-authorize](https://github.com/IlleNilsson/xmip-core-authorize).
 
 ## Toolchain
 
