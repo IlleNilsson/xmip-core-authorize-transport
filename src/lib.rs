@@ -15,26 +15,21 @@
 //!
 //! **The address.** Where the mechanism is `ip` the value is the address.
 //! Otherwise it is read from the evidence the first gate recorded under
-//! [`ADDRESS`], the one evidence name this policy branches on; a rule that
+//! [`net::PEER_ADDRESS`] — the name identification writes it under, which
+//! this read as `address` until 2026-09-22 and so never met — the one
+//! evidence name this policy branches on; a rule that
 //! names networks and an identity with no readable address do not meet. A
 //! rule that names Contracts and an attempt with none do not meet either.
 //! An attempt no rule applies to is no opinion.
 
-pub mod network;
-
 use authorize::{Attempt, Authorizer, Decision};
 use context::{AuthenticatedIdentity, IdentityFacts};
+use net::{Network, PEER_ADDRESS};
 use std::net::IpAddr;
 use xcore::{IdentityClass, Layer};
 
-pub use network::{Network, NetworkError};
-
 /// The manifest leaf, and the name a denial carries.
 pub const NAME: &str = "transport";
-
-/// The evidence name the peer address is read from where the mechanism is
-/// not `ip` itself.
-pub const ADDRESS: &str = "address";
 
 /// What a rule concludes where it applies.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -138,11 +133,11 @@ pub fn address_of(identity: &AuthenticatedIdentity) -> Option<IpAddr> {
         identity
             .evidence
             .iter()
-            .find(|(name, _)| name == ADDRESS)
+            .find(|(name, _)| name == PEER_ADDRESS)
             .map(|(_, value)| value.as_str())?
     };
 
-    text.parse().ok()
+    net::address::parse(text).ok()
 }
 
 /// The rules, in the order they are consulted.
@@ -219,7 +214,7 @@ mod tests {
         let identity =
             AuthenticatedIdentity::new(mechanism, value, Established::Passed, Verified::Proven);
         let identity = match address {
-            Some(address) => identity.with_evidence(ADDRESS, address),
+            Some(address) => identity.with_evidence(PEER_ADDRESS, address),
             None => identity,
         };
 
@@ -326,6 +321,21 @@ mod tests {
             address_of(&facts(mechanism::basic(), "alice", None).transport),
             None,
             "no evidence, no address"
+        );
+    }
+
+    #[test]
+    fn a_peer_identified_by_name_is_read_where_identification_wrote_it() {
+        let named = facts(
+            mechanism::dns(),
+            "partner-x.example",
+            Some("192.0.2.10:4711"),
+        );
+
+        assert_eq!(
+            address_of(&named.transport),
+            Some("192.0.2.10".parse().expect("an address")),
+            "under peer.address, and with its port"
         );
     }
 }
