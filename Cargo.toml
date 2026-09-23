@@ -21,7 +21,7 @@ authorize = { package = "xmip-core-authorize", git = "https://github.com/IlleNil
 context = { package = "xmip-core-context", git = "https://github.com/IlleNilsson/xmip-core-context", branch = "main" }
 xcore = { package = "xmip-core", git = "https://github.com/IlleNilsson/xmip-core", branch = "main" }
 # The peer's address, its evidence name, and the network a rule names.
-net = { package = "xmip-core-net", git = "https://github.com/IlleNilsson/xmip-core-net", branch = "main" }
+net = { package = "xmip-core-library-net", git = "https://github.com/IlleNilsson/xmip-core-library-net", branch = "main" }
 
 [lints.rust]
 unsafe_code = "forbid"
