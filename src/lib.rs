@@ -15,7 +15,7 @@
 //!
 //! **The address.** Where the mechanism is `ip` the value is the address.
 //! Otherwise it is read from the evidence the first gate recorded under
-//! [`net::PEER_ADDRESS`] — the name identification writes it under, which
+//! [`context::property::PEER_ADDRESS`] — the name identification writes it under, which
 //! this read as `address` until 2026-09-22 and so never met — the one
 //! evidence name this policy branches on; a rule that
 //! names networks and an identity with no readable address do not meet. A
@@ -23,8 +23,9 @@
 //! An attempt no rule applies to is no opinion.
 
 use authorize::{Attempt, Authorizer, Decision};
+use context::property::PEER_ADDRESS;
 use context::{AuthenticatedIdentity, IdentityFacts};
-use net::{Network, PEER_ADDRESS};
+use net::Network;
 use std::net::IpAddr;
 use xcore::{IdentityClass, Layer};
 
