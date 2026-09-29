@@ -10,7 +10,7 @@
 //! about what a connection may carry, the Contracts; every list it leaves
 //! empty means any. The rules are consulted in order and the first that
 //! applies decides: a plain-text mechanism may not carry a given Contract, a
-//! shared secret from outside the partner network may not post here, a
+//! shared secret from outside the Party network may not post here, a
 //! mutually authenticated connection may.
 //!
 //! **The address.** Where the mechanism is `ip` the value is the address.
@@ -233,9 +233,9 @@ mod tests {
                     .class(IdentityClass::SharedSecret)
                     .contract("Orders"),
             )
-            .rule(TransportRule::deny("partner-network-only").mechanism("basic"))
+            .rule(TransportRule::deny("party-network-only").mechanism("basic"))
             .rule(
-                TransportRule::allow("partner-network")
+                TransportRule::allow("party-network")
                     .mechanism("basic")
                     .network(network("10.20.0.0/16")),
             )
@@ -245,8 +245,8 @@ mod tests {
     #[test]
     fn a_mutually_authenticated_connection_is_allowed_by_the_rule_that_names_it() {
         let decision = policy().decide(
-            &facts(mechanism::mutual_tls(), "CN=partner-x.example", None),
-            &Attempt::new(Action::Receive, "partner-x"),
+            &facts(mechanism::mutual_tls(), "CN=party-x.example", None),
+            &Attempt::new(Action::Receive, "party-x"),
         );
 
         assert_eq!(decision, Some(Decision::Allowed));
@@ -259,7 +259,7 @@ mod tests {
         let decision = policy()
             .decide(
                 &facts(mechanism::basic(), "alice", Some("10.20.3.4")),
-                &Attempt::new(Action::Receive, "partner-x").on_contract("Orders"),
+                &Attempt::new(Action::Receive, "party-x").on_contract("Orders"),
             )
             .expect("an opinion");
 
@@ -274,7 +274,7 @@ mod tests {
     fn an_identity_no_rule_applies_to_is_no_opinion() {
         let decision = policy().decide(
             &facts(mechanism::anonymous(), "", None),
-            &Attempt::new(Action::Receive, "partner-x"),
+            &Attempt::new(Action::Receive, "party-x"),
         );
 
         assert_eq!(decision, None);
@@ -282,28 +282,28 @@ mod tests {
 
     #[test]
     fn the_first_rule_that_applies_decides_and_an_address_is_read_from_ip_or_evidence() {
-        // The deny on 'basic' comes before the allow on the partner network,
+        // The deny on 'basic' comes before the allow on the Party network,
         // so the order is the policy: the network rule never gets a say.
         let inside = facts(mechanism::basic(), "alice", Some("10.20.3.4"));
         let denied = policy()
-            .decide(&inside, &Attempt::new(Action::Receive, "partner-x"))
+            .decide(&inside, &Attempt::new(Action::Receive, "party-x"))
             .expect("an opinion");
         assert!(
-            denied.to_string().contains("'partner-network-only'"),
+            denied.to_string().contains("'party-network-only'"),
             "got {denied}"
         );
 
-        // Reordered, the network rule applies inside the partner network and
+        // Reordered, the network rule applies inside the Party network and
         // not outside it — where the identity is the address, or carries it.
         let reordered = TransportPolicy::new()
             .rule(
-                TransportRule::allow("partner-network")
+                TransportRule::allow("party-network")
                     .mechanism("basic")
                     .mechanism("ip")
                     .network(network("10.20.0.0/16")),
             )
             .rule(TransportRule::deny("elsewhere"));
-        let attempt = Attempt::new(Action::Receive, "partner-x");
+        let attempt = Attempt::new(Action::Receive, "party-x");
 
         assert_eq!(reordered.decide(&inside, &attempt), Some(Decision::Allowed));
         assert_eq!(
@@ -327,11 +327,7 @@ mod tests {
 
     #[test]
     fn a_peer_identified_by_name_is_read_where_identification_wrote_it() {
-        let named = facts(
-            mechanism::dns(),
-            "partner-x.example",
-            Some("192.0.2.10:4711"),
-        );
+        let named = facts(mechanism::dns(), "party-x.example", Some("192.0.2.10:4711"));
 
         assert_eq!(
             address_of(&named.transport),
