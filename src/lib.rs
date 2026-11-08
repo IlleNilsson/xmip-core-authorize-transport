@@ -246,7 +246,7 @@ mod tests {
     fn a_mutually_authenticated_connection_is_allowed_by_the_rule_that_names_it() {
         let decision = policy().decide(
             &facts(mechanism::mutual_tls(), "CN=party-x.example", None),
-            &Attempt::new(Action::Receive, "party-x"),
+            &Attempt::now(Action::Receive, "party-x"),
         );
 
         assert_eq!(decision, Some(Decision::Allowed));
@@ -259,7 +259,7 @@ mod tests {
         let decision = policy()
             .decide(
                 &facts(mechanism::basic(), "alice", Some("10.20.3.4")),
-                &Attempt::new(Action::Receive, "party-x").on_contract("Orders"),
+                &Attempt::now(Action::Receive, "party-x").on_contract("Orders"),
             )
             .expect("an opinion");
 
@@ -274,7 +274,7 @@ mod tests {
     fn an_identity_no_rule_applies_to_is_no_opinion() {
         let decision = policy().decide(
             &facts(mechanism::anonymous(), "", None),
-            &Attempt::new(Action::Receive, "party-x"),
+            &Attempt::now(Action::Receive, "party-x"),
         );
 
         assert_eq!(decision, None);
@@ -286,7 +286,7 @@ mod tests {
         // so the order is the policy: the network rule never gets a say.
         let inside = facts(mechanism::basic(), "alice", Some("10.20.3.4"));
         let denied = policy()
-            .decide(&inside, &Attempt::new(Action::Receive, "party-x"))
+            .decide(&inside, &Attempt::now(Action::Receive, "party-x"))
             .expect("an opinion");
         assert!(
             denied.to_string().contains("'party-network-only'"),
@@ -303,7 +303,7 @@ mod tests {
                     .network(network("10.20.0.0/16")),
             )
             .rule(TransportRule::deny("elsewhere"));
-        let attempt = Attempt::new(Action::Receive, "party-x");
+        let attempt = Attempt::now(Action::Receive, "party-x");
 
         assert_eq!(reordered.decide(&inside, &attempt), Some(Decision::Allowed));
         assert_eq!(
